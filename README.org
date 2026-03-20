@@ -23,8 +23,9 @@ utility to gather hash compress and send large files over the network
   (cleanup)
 #+end_src
 
-* TODO
+* planned
 
+- TODO
 - preflight parameter report
 - preflight checks
 - handle directories in payload

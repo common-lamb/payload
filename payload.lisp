@@ -1,5 +1,13 @@
 (in-package :payload)
 
+;;;; check dependencies
+(defun check-dependencies ()
+  (cmd:$cmd "which rsync")
+  (cmd:$cmd "which md5sum")
+  ;; all good
+  T)
+
+
 (defparameter *remote-login* ""
   "
 like: user@remote: with trailing colon
@@ -13,29 +21,35 @@ an absolute file path as string with trailing slash")
 (defparameter *payload* nil
   "list of file paths (no dirs)")
 
-;;;; check dependencies
-(defun check-dependencies ()
-  (cmd:$cmd "which rsync")
-  (cmd:$cmd "which md5sum")
-  ;; all good
-  T)
+(defparameter *operations-home* (user-homedir-pathname)
+  "
+used to direct operations to a consistent place")
 
-;; USER (check-dependencies)
 
 ;;;; create dir structure
+
+(defun direct-parent (path)
+  "
+takes a path
+returns the single lowest directory namestring
+"
+  (first (last (pathname-directory path))))
 (defparameter *date*
   (local-time:format-timestring nil (local-time:now) :format local-time:+iso-8601-date-format+))
 (defun transfer-dir-name ()
   (format nil "~A_data-transfer/" *date*))
 
 (defun transfer-dir ()
-  (filepaths:join (user-homedir-pathname) (transfer-dir-name)))
+  (filepaths:join *operations-home* (transfer-dir-name)))
 (defun payload-dir ()
   (filepaths:join (transfer-dir) "payload/" ))
 (defun docs-dir ()
   (filepaths:join (transfer-dir) "docs/" ))
 (defun hashes-dir ()
   (filepaths:join (transfer-dir) "hashes/" ))
+(defun compressed-name ()
+  (str:concat (direct-parent (transfer-dir)) ".tar.gz"))
+
 
 (defun create-transfer-directories ()
   (ensure-directories-exist (transfer-dir))
@@ -43,7 +57,6 @@ an absolute file path as string with trailing slash")
   (ensure-directories-exist (docs-dir))
   (ensure-directories-exist (hashes-dir)))
 
-;; USER (create-transfer-directories)
 
 ;;;; define commands
 (defparameter *cmd-compress* "tar -czvf")
@@ -86,7 +99,6 @@ creates the documents for the recievers
     (write-line (format nil "nav to payload dir and check hashes with:~%  ~A ../hashes/checksum.md5 " *cmd-hash-check*) out)
     T))
 
-;; USER (make-documents)
 
 ;;;; check target has write access
 (defun test-transfer ()
@@ -100,7 +112,6 @@ errors on code 23 if no write access
     (format t "Testing target dir write access:~&  ~A" target)
     (call-rsync file target :flags "-vrPL")))
 
-;; USER (test-transfer)
 
 ;;;; check each in payload exists &&&
 ;; (mapcar #'probe-file *payload*)
@@ -117,7 +128,11 @@ creates a symlink in payload
                    (namestring
                     (payload-dir)))))
 
-;; (mapcar #'make-symlink *payload*)
+(defun link-payload ()
+  "
+symlinks all files in payload list into the payload dir
+"
+  (mapcar #'make-symlink *payload*))
 
 ;;;; hash each in payload into hashes dir
 
@@ -134,12 +149,31 @@ creates a symlink in payload
     (mapcar #'hash-file
               (uiop:directory-files (uiop:getcwd)))))
 
-;; USER (hash-payload)
+;;;; recursive compress data-transfer dir
 
-;;;; recursive compress data-transfer dir &&&
+(defun call-compress ()
+  "
+calls cmd-compress on the transfer dir, creating the new name
+"
+  (uiop:with-current-directory (*operations-home*)
+    (let ((payload-name (namestring (transfer-dir))))
+      (cmd:cmd (format nil "~A '~A' '~A'" *cmd-compress* (compressed-name) payload-name))
+      )))
 
+;;;; move dir to target
+(defun do-transfer ()
+  "
+rsync the compressed data to target
+"
+  (let ((target (format nil "~A~A" *remote-login* *target*)))
 
-;;;; move dir to target &&&
-;;;; clean up &&&
+    (format t "Transfering to target dir:~&  ~A" target)
+    (uiop:with-current-directory (*operations-home*)
+      (call-rsync (compressed-name) target :flags "-vP")
+      )))
 
-;;;; workflow
+;;;; clean up
+(defun cleanup ()
+  (org.shirakumo.filesystem-utils:delete-directory (transfer-dir)  )
+  (uiop:with-current-directory (*operations-home*)
+    (org.shirakumo.filesystem-utils:delete-file* (compressed-name))))

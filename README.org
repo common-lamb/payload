@@ -6,29 +6,34 @@ utility to gather hash compress and send large files over the network
 
 #+begin_src lisp
   (asdf:load-system :lamb.files.payload)
+  (use-package :payload)
 
+  ;; parameters are tested before flight and will prompt when wrong
+
+  ;; *project-name*
+  ;; *remote-login*
+  ;; *target-dir*
+  ;; *payload-files*
+
+  (setf *project-name* "data-transfer-0")
   (setf *remote-login* "user@computer.com:")
-  (setf *target* "/path/to/target/") ; &&& check trailing slash
-  (setf *payload* '("/path/to/file.type"
-                    "/path/to/file1.type"))
+  (setf *target-dir* "~/path/to/target/")
+  (setf *payload-files* '("/path/to/file0.type"
+                          "/path/to/file1.type"))
 
-  (check-dependencies)
-  (create-transfer-directories)
-  (make-documents)
-  (test-transfer)
-  (link-payload)
-  (hash-payload)
-  (call-compress)
-  (do-transfer)
-  (cleanup)
+
+  ;; functions
+  create-transfer-directories
+  create-documents
+  test-transfer
+  check-payload-files
+  link-all
+  hash-all
+  compress
+  transfer
+  cleanup
+
+
+  ;; all in in one with tests
+  deliver-payload
 #+end_src
-
-* planned
-
-- TODO
-- preflight parameter report
-- preflight checks
-- handle directories in payload
-- decompress on the other side
-- package as binary with cli args
-- parallel processing

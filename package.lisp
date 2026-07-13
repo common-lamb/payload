@@ -10,11 +10,13 @@
    *remote-login*
    *target-dir*
    *payload-files*
+   *log*
    ;; functions
+   check-parameters
    create-transfer-directories
    create-documents
    test-transfer
-   check-payload-files
+   check-payload
    link-all
    hash-all
    compress

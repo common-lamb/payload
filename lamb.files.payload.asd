@@ -9,6 +9,7 @@
                :cl-ppcre
                :chipz
                :alexandria
+               :journal
                :local-time
                :filepaths
                :filesystem-utils

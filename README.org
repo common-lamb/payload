@@ -5,7 +5,7 @@ utility to gather hash compress and send large files over the network
 * workflow
 
 #+begin_src lisp
-  (asdf:load-system :lamb.files.payload)
+  (asdf:load-system :metarepl.file-processing.payload)
   (use-package :payload)
 
   ;; parameters are tested before flight and will prompt when wrong

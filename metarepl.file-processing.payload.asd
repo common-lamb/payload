@@ -1,6 +1,6 @@
-(defsystem "lamb.files.payload"
+(defsystem "metarepl.file-processing.payload"
   :description "file hash compres and send utility"
-  :author "common-lamb (https://github.com/common-lamb)"
+  :author "metarepl (https://github.com/metarepl)"
   :version "0.0.1"
   :license "MIT"
   :depends-on (
